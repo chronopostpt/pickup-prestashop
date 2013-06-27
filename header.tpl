@@ -1,1 +1,0 @@
-<script type="text/javascript" src="{$module_dir}js/jquery.ddslick.min.js"></script>

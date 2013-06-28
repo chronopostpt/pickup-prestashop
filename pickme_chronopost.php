@@ -65,7 +65,7 @@ class pickme_chronopost extends CarrierModule
   		$id_pickme_shop_order = Db::getInstance()->getValue('
 				SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
 				WHERE pickme_id="'.$message->Number.'"');
-  		
+
   		if ($id_pickme_shop_order == "") {
   			$query = '
 					INSERT INTO `'._DB_PREFIX_.'pickme_shops`
@@ -136,7 +136,7 @@ class pickme_chronopost extends CarrierModule
 			return false;
 		return true;
 	}
-	
+
 	public function uninstall()
 	{
 		// Uninstall
@@ -145,7 +145,7 @@ class pickme_chronopost extends CarrierModule
 		    !Configuration::deleteByName('PICKME_WEBSERVICE') ||
 		    !$this->unregisterHook('updateCarrier'))
 			return false;
-		
+
 		// Delete External Carrier
 		$Carrier1 = new Carrier((int)(Configuration::get('PICKME_CARRIER_ID')));
 
@@ -285,7 +285,7 @@ class pickme_chronopost extends CarrierModule
 	    $html .= '<li>Postal Code: '.$result['postal_code'].'</li>';
 	    $html .= '</ul>';
 	    $html .= '</fieldset>';
-	    
+
 	    return $html;
 	  }
   }
@@ -370,6 +370,13 @@ class pickme_chronopost extends CarrierModule
 	public function getContent()
 	{
 		$this->_html .= '<h2>' . $this->l('PickMe Chronopost').'</h2>';
+		if (!empty($_POST) AND Tools::isSubmit('updateDatabase')) {
+			if (Tools::getValue('pickme_refresh') == 'true') {
+				$this->updateDatabase();
+				$this->_html .= $this->displayConfirmation($this->l('Database updated'));
+			}
+		}
+
 		if (!empty($_POST) AND Tools::isSubmit('submitSave'))
 		{
 			$this->_postValidation();
@@ -402,25 +409,31 @@ class pickme_chronopost extends CarrierModule
 
 		$this->_html .= '</fieldset><div class="clear">&nbsp;</div>
 			<style>
-				#tabList { clear: left; }
-				.tabItem { display: block; background: #FFFFF0; border: 1px solid #CCCCCC; padding: 10px; padding-top: 20px; }
 			</style>
 			<div id="tabList">
 				<div class="tabItem">
 					<form action="index.php?tab='.Tools::getValue('tab').'&configure='.Tools::getValue('configure').'&token='.Tools::getValue('token').'&tab_module='.Tools::getValue('tab_module').'&module_name='.Tools::getValue('module_name').'&id_tab=1&section=general" method="post" class="form" id="configForm">
 
-					<fieldset style="border: 0px;">
-						<h4>'.$this->l('General configuration').' :</h4>
-						<label>'.$this->l('PickMe webservice').' : </label>
-						<div class="margin-form"><input type="text" size="100" name="pickme_webservice" value="'.Tools::getValue('pickme_webservice', Configuration::get('PICKME_WEBSERVICE')).'" /></div>
-						<label>'.$this->l('PickMe overcost').' : </label>
-						<div class="margin-form"><input type="text" size="20" name="pickme_overcost" value="'.Tools::getValue('pickme_overcost', Configuration::get('PICKME_OVERCOST')).'" /></div>
-					</div>
-					<br /><br />
-				</fieldset>				
-				<div class="margin-form"><input class="button" name="submitSave" type="submit"></div>
-			</form>
-		</div></div>';
+						<fieldset style="border: 0px;">
+							<h4>'.$this->l('General configuration').' :</h4>
+							<label>'.$this->l('PickMe webservice').' : </label>
+							<div class="margin-form"><input type="text" size="100" name="pickme_webservice" value="'.Tools::getValue('pickme_webservice', Configuration::get('PICKME_WEBSERVICE')).'" /></div>
+							<label>'.$this->l('PickMe overcost').' : </label>
+							<div class="margin-form"><input type="text" size="20" name="pickme_overcost" value="'.Tools::getValue('pickme_overcost', Configuration::get('PICKME_OVERCOST')).'" /></div>
+							<div class="margin-form"><input class="button" name="submitSave" type="submit" value="Save"></div>
+						</fieldset>
+					</form>
+				</div>
+
+				<div class="tabItem">
+					<form action="index.php?tab='.Tools::getValue('tab').'&configure='.Tools::getValue('configure').'&token='.Tools::getValue('token').'&tab_module='.Tools::getValue('tab_module').'&module_name='.Tools::getValue('module_name').'&pickme_refresh=true" method="post" class="form" id="configForm">
+						<fieldset style="border: 0px;">
+							<h4>'.$this->l('Use this button to update the PickMe Available Stores').' :</h4>
+							<div class="margin-form"><input class="button" name="updateDatabase" type="submit" value="Update Database"></div>
+						</fieldset>
+					</form>
+				</div>
+			</div>';
 	}
 
 	private function _postValidation()
@@ -465,7 +478,7 @@ class pickme_chronopost extends CarrierModule
 	** $shipping_cost var contains the price calculated by the range in carrier tab
 	**
 	*/
-	
+
 	public function getOrderShippingCost($params, $shipping_cost)
 	{
 		// This example returns shipping cost with overcost set in the back-office, but you can call a webservice or calculate what you want before returning the final value to the Cart
@@ -475,7 +488,7 @@ class pickme_chronopost extends CarrierModule
 		// If the carrier is not known, you can return false, the carrier won't appear in the order process
 		return false;
 	}
-	
+
 	public function getOrderShippingCostExternal($params)
 	{
 		// This example returns the overcost directly, but you can call a webservice or calculate what you want before returning the final value to the Cart
@@ -485,7 +498,5 @@ class pickme_chronopost extends CarrierModule
 		// If the carrier is not known, you can return false, the carrier won't appear in the order process
 		return false;
 	}
-	
+
 }
-
-

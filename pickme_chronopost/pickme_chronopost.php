@@ -357,7 +357,7 @@ class pickme_chronopost extends CarrierModule
 
   public function hookDisplayBeforeCarrier()
   {
-  	return "before carrier hook";
+  	//return "before carrier hook";
   }
 
 

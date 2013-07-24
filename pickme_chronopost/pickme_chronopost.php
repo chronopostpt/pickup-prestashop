@@ -58,28 +58,41 @@ class pickme_chronopost extends CarrierModule
 
 	public function updateDatabase()
 	{
-		//$client = new SoapClient("https://83.240.239.170:7554/ChronoWSB2CPointsv3/GetB2CPoints_v3Service?wsdl");
-		$client = new SoapClient(Configuration::get('PICKME_WEBSERVICE'));
-    $result = $client->getPointList_V3();
-    foreach ($result->return->lB2CPointsArr as $message) {
-  		$id_pickme_shop_order = Db::getInstance()->getValue('
-				SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
-				WHERE pickme_id="'.$message->Number.'"');
+		$context = stream_context_create(
+			array(
+				'ssl' => array(
+					'verify_peer' => false,
+					'allow_self_signed' => true
+				)
+			)
+		);
+		$client = new SoapClient(
+			Configuration::get('PICKME_WEBSERVICE'),
+			array(
+				'stream_context' => $context
+			)
+		);
 
-  		if ($id_pickme_shop_order == "") {
-  			$query = '
-					INSERT INTO `'._DB_PREFIX_.'pickme_shops`
-								 (pickme_id, name, address, postal_code, location)
-					VALUES ("'.$message->Number.'", "'.$message->Name.'", "'.$message->Address.'", "'.$message->PostalCode.'", "'.$message->PostalCodeLocation.'")';
-				Db::getInstance()->execute($query);
-  		} else {
-  			$query = '
-					UPDATE `'._DB_PREFIX_.'pickme_shops`
-					SET name="'.$message->Name.'", address="'.$message->Address.'", postal_code="'.$message->PostalCode.', location="'.$message->PostalCodeLocation.'"
-					WHERE pickme_id="'.$message->Number.'"';
-				Db::getInstance()->execute($query);
-  		}
-    }
+	    $result = $client->getPointList_V3();
+	    foreach ($result->return->lB2CPointsArr as $message) {
+	  		$id_pickme_shop_order = Db::getInstance()->getValue('
+					SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
+					WHERE pickme_id="'.$message->Number.'"');
+
+	  		if ($id_pickme_shop_order == "") {
+	  			$query = '
+						INSERT INTO `'._DB_PREFIX_.'pickme_shops`
+									 (pickme_id, name, address, postal_code, location)
+						VALUES ("'.$message->Number.'", "'.$message->Name.'", "'.$message->Address.'", "'.$message->PostalCode.'", "'.$message->PostalCodeLocation.'")';
+					Db::getInstance()->execute($query);
+	  		} else {
+	  			$query = '
+						UPDATE `'._DB_PREFIX_.'pickme_shops`
+						SET name="'.$message->Name.'", address="'.$message->Address.'", postal_code="'.$message->PostalCode.', location="'.$message->PostalCodeLocation.'"
+						WHERE pickme_id="'.$message->Number.'"';
+					Db::getInstance()->execute($query);
+	  		}
+	    }
 	}
 
 

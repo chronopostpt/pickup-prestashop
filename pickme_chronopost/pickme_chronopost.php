@@ -22,7 +22,7 @@ class pickme_chronopost extends CarrierModule
 	{
 		$this->name = 'pickme_chronopost';
 		$this->tab = 'shipping_logistics';
-		$this->version = '1.0';
+		$this->version = '1.1';
 		$this->author = 'motivus.pt';
 	  $this->module_key = '11bad94727c2f1530e15c3c93ed2c5ce';
 		//$this->limited_countries = array('fr', 'us');
@@ -59,40 +59,40 @@ class pickme_chronopost extends CarrierModule
 	public function updateDatabase()
 	{
 		$context = stream_context_create(
-			array(
-				'ssl' => array(
-					'verify_peer' => false,
-					'allow_self_signed' => true
-				)
-			)
+		  array(
+		    'ssl' => array(
+		      'verify_peer' => false,
+		      'allow_self_signed' => true
+		    )
+		  )
 		);
 		$client = new SoapClient(
-			Configuration::get('PICKME_WEBSERVICE'),
-			array(
-				'stream_context' => $context
-			)
+		  Configuration::get('PICKME_WEBSERVICE'),
+		  array(
+		    'stream_context' => $context
+		  )
 		);
 
-	    $result = $client->getPointList_V3();
-	    foreach ($result->return->lB2CPointsArr as $message) {
-	  		$id_pickme_shop_order = Db::getInstance()->getValue('
-					SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
-					WHERE pickme_id="'.$message->Number.'"');
+		  $result = $client->getPointList_V3();
+		  foreach ($result->return->lB2CPointsArr as $message) {
+		    $id_pickme_shop_order = Db::getInstance()->getValue('
+		      SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
+		      WHERE pickme_id="'.$message->Number.'"');
 
-	  		if ($id_pickme_shop_order == "") {
-	  			$query = '
-						INSERT INTO `'._DB_PREFIX_.'pickme_shops`
-									 (pickme_id, name, address, postal_code, location)
-						VALUES ("'.$message->Number.'", "'.$message->Name.'", "'.$message->Address.'", "'.$message->PostalCode.'", "'.$message->PostalCodeLocation.'")';
-					Db::getInstance()->execute($query);
-	  		} else {
-	  			$query = '
-						UPDATE `'._DB_PREFIX_.'pickme_shops`
-						SET name="'.$message->Name.'", address="'.$message->Address.'", postal_code="'.$message->PostalCode.', location="'.$message->PostalCodeLocation.'"
-						WHERE pickme_id="'.$message->Number.'"';
-					Db::getInstance()->execute($query);
-	  		}
-	    }
+		    if ($id_pickme_shop_order == "") {
+		      $query = '
+		        INSERT INTO `'._DB_PREFIX_.'pickme_shops`
+		               (pickme_id, name, address, postal_code, location)
+		        VALUES ("'.$message->Number.'", "'.$message->Name.'", "'.$message->Address.'", "'.$message->PostalCode.'", "'.$message->PostalCodeLocation.'")';
+		      Db::getInstance()->execute($query);
+		    } else {
+		      $query = '
+		        UPDATE `'._DB_PREFIX_.'pickme_shops`
+		        SET name="'.$message->Name.'", address="'.$message->Address.'", postal_code="'.$message->PostalCode.', location="'.$message->PostalCodeLocation.'"
+		        WHERE pickme_id="'.$message->Number.'"';
+		      Db::getInstance()->execute($query);
+		    }
+		  }
 	}
 
 
@@ -265,11 +265,16 @@ class pickme_chronopost extends CarrierModule
 	{
 		// cart, customer, order, altern
 		if (($params['cart']->id_carrier) == ((int)(Configuration::get('PICKME_CARRIER_ID')))) {
-			error_log("pickme order");
+			// error_log("pickme order");
+			$result = Db::getInstance()->getRow('
+							SELECT *
+							FROM `' . _DB_PREFIX_ . 'pickme_shops`
+							WHERE id_pickme_shop='.$_COOKIE["pickme_store"]);
+
 			$query = '
 				INSERT INTO `'._DB_PREFIX_.'pickme_shop_orders`
-							 (id_pickme_shop, id_order)
-				VALUES ("'.$_COOKIE["pickme_store"].'", '.(int)$params['order']->id.')';
+							 (id_order, pickme_shop_name, pickme_shop_address, pickme_shop_location, pickme_shop_postal_code)
+				VALUES ('.(int)$params['order']->id.', "'.$result['name'].'", "'.$result['address'].'", "'.$result['location'].'", "'.$result['postal_code'].'")';
 			Db::getInstance()->execute($query);
 			// print_r($_COOKIE["pickme_store"]);
 			// print_r($params);
@@ -280,22 +285,27 @@ class pickme_chronopost extends CarrierModule
 	public function hookDisplayAdminOrder($params)
   {
   	if (($params['cart']->id_carrier) == ((int)(Configuration::get('PICKME_CARRIER_ID')))) {
-	  	$pickme_shop_id = Db::getInstance()->getValue('
-					SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shop_orders`
-					WHERE id_order='.$params['id_order']);
+	  	// $pickme_shop_id = Db::getInstance()->getValue('
+				// 	SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shop_orders`
+				// 	WHERE id_order='.$params['id_order']);
 
+	  	// $result = Db::getInstance()->getRow('
+				// SELECT *
+				// FROM `' . _DB_PREFIX_ . 'pickme_shops`
+				// WHERE id_pickme_shop='.$pickme_shop_id);
 	  	$result = Db::getInstance()->getRow('
-				SELECT *
-				FROM `' . _DB_PREFIX_ . 'pickme_shops`
-				WHERE id_pickme_shop='.$pickme_shop_id);
+	  					SELECT *
+	  					FROM `' . _DB_PREFIX_ . 'pickme_shop_orders`
+	  					WHERE id_order='.$params['id_order']);
+
 
 	    $html = '<br/><fieldset>';
 	    $html .= '<legend><img src="../img/admin/delivery.gif"> PickMe Chronopost delivery locations:</legend>';
 	    $html .= '<ul>';
-	    $html .= '<li>Name: '.$result['name'].'</li>';
-	    $html .= '<li>Address: '.$result['address'].'</li>';
-	    $html .= '<li>Location: '.$result['location'].'</li>';
-	    $html .= '<li>Postal Code: '.$result['postal_code'].'</li>';
+	    $html .= '<li>Name: '.$result['pickme_shop_name'].'</li>';
+	    $html .= '<li>Address: '.$result['pickme_shop_address'].'</li>';
+	    $html .= '<li>Location: '.$result['pickme_shop_location'].'</li>';
+	    $html .= '<li>Postal Code: '.$result['pickme_shop_postal_code'].'</li>';
 	    $html .= '</ul>';
 	    $html .= '</fieldset>';
 
@@ -370,7 +380,7 @@ class pickme_chronopost extends CarrierModule
 
   public function hookDisplayBeforeCarrier()
   {
-  	//return "before carrier hook";
+  	// return "before carrier hook";
   }
 
 

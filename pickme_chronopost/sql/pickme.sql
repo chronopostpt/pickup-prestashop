@@ -1,6 +1,9 @@
 CREATE TABLE IF NOT EXISTS `PREFIX_pickme_shop_orders` (
   `id_order` int(10) unsigned NOT NULL,
-  `id_pickme_shop` int(10) unsigned NOT NULL,
+  `pickme_shop_name` varchar(255) NULL,
+  `pickme_shop_address` varchar(1000) NULL,
+  `pickme_shop_location` varchar(400) NULL,
+  `pickme_shop_postal_code` varchar(20) NULL,
   PRIMARY KEY  (`id_order`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 

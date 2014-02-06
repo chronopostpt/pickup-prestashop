@@ -22,7 +22,7 @@ class pickme_chronopost extends CarrierModule
 	{
 		$this->name = 'pickme_chronopost';
 		$this->tab = 'shipping_logistics';
-		$this->version = '1.1';
+		$this->version = '1.2';
 		$this->author = 'motivus.pt';
 	  $this->module_key = '11bad94727c2f1530e15c3c93ed2c5ce';
 		//$this->limited_countries = array('fr', 'us');
@@ -103,7 +103,8 @@ class pickme_chronopost extends CarrierModule
 
 	public function install()
 	{
-		Configuration::updateValue('PICKME_WEBSERVICE', "https://83.240.239.170:7554/ChronoWSB2CPointsv3/GetB2CPoints_v3Service?wsdl");
+		//Configuration::updateValue('PICKME_WEBSERVICE', "https://83.240.239.170:7554/ChronoWSB2CPointsv3/GetB2CPoints_v3Service?wsdl");
+		Configuration::updateValue('PICKME_WEBSERVICE', "http://83.240.239.170:7790/ChronoWSB2CPointsv3/GetB2CPoints_v3Service?wsdl");
 
 		$sqlpath = _PS_MODULE_DIR_. 'pickme_chronopost/sql/pickme.sql';
 		if ((!file_exists($sqlpath)) ||

@@ -24,7 +24,7 @@ class pickme_chronopost extends CarrierModule
 		$this->tab = 'shipping_logistics';
 		$this->version = '1.2';
 		$this->author = 'motivus.pt';
-	  $this->module_key = '11bad94727c2f1530e15c3c93ed2c5ce';
+		$this->module_key = '11bad94727c2f1530e15c3c93ed2c5ce';
 		//$this->limited_countries = array('fr', 'us');
 
 		parent::__construct ();
@@ -277,9 +277,9 @@ class pickme_chronopost extends CarrierModule
 							 (id_order, pickme_shop_name, pickme_shop_address, pickme_shop_location, pickme_shop_postal_code)
 				VALUES ('.(int)$params['order']->id.', "'.$result['name'].'", "'.$result['address'].'", "'.$result['location'].'", "'.$result['postal_code'].'")';
 			Db::getInstance()->execute($query);
-			// print_r($_COOKIE["pickme_store"]);
-			// print_r($params);
-			// die();
+			 //~ print_r($_COOKIE["pickme_store"]);
+			 //~ print_r($params);
+			 //~ die();
 		}
 	}
 
@@ -316,9 +316,15 @@ class pickme_chronopost extends CarrierModule
 
   public function hookDisplayCarrierList($params)
   {
+	  
+	if (!($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')))){
+		return false;
+	}	  
+	
   	// print_r($params);
   	// die();
-  	$script = '<script type="text/javascript">';
+  	
+  	$script = "<script type=\"text/javascript\"> ";
   	$script .= "$(document).ready(function() {";
   	$script .= "$('.pickme_stores_select:not(:first)').remove();";
   	$script .= "$($('input[value=\"".(Configuration::get('PICKME_CARRIER_ID'))."\"]').closest('label').find('table td')[1]).append($('#pickme_stores'));";
@@ -326,11 +332,11 @@ class pickme_chronopost extends CarrierModule
   	$script .= "$('#pickme_stores').change(function(){document.cookie = 'pickme_store='+$('#pickme_stores').val();})";
     //$script .= "$('#pickme_stores').ddslick();";
   	$script .= "});";
-  	$script .= '</script>';
+  	$script .= "</script>";
 
   	$html = $script;
 
-  	$list = '<select id="pickme_stores" class="pickme_stores_select"><optgroup';
+  	$list = '<select id="pickme_stores" class="pickme_stores_select" style="width:100%"><optgroup>';
 
   	$sql = 'SELECT * FROM '._DB_PREFIX_.'pickme_shops order by location asc';// WHERE postal_code like "%'.substr(($params['address']->postcode), 0, 4).'%"';
 		if ($results = Db::getInstance()->ExecuteS($sql)) {
@@ -507,7 +513,7 @@ class pickme_chronopost extends CarrierModule
 	{
 		// This example returns shipping cost with overcost set in the back-office, but you can call a webservice or calculate what you want before returning the final value to the Cart
 		if ($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')) && Configuration::get('PICKME_OVERCOST') >= 0)
-			return (float)(Configuration::get('PICKME_OVERCOST'));
+			return $shipping_cost + (float)(Configuration::get('PICKME_OVERCOST'));
 
 		// If the carrier is not known, you can return false, the carrier won't appear in the order process
 		return false;

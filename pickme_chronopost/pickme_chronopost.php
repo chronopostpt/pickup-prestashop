@@ -321,8 +321,12 @@ class pickme_chronopost extends CarrierModule
 		return false;
 	}	  
 	
-  	// print_r($params);
-  	// die();
+	$is_selected = $this->id_carrier == $params['cart']->id_carrier;
+	
+	//	echo "<pre>";echo($params['cart']->id_carrier);echo "</pre>";
+	//	echo "<pre>";echo($this->id_carrier);echo "</pre>";
+  	//  echo "<pre>";echo($this->id_carrier) ."   ".(int)(Configuration::get('PICKME_CARRIER_ID'));echo "</pre>";
+  	//  die();
   	
   	$script = "<script type=\"text/javascript\"> ";
   	$script .= "$(document).ready(function() {";
@@ -380,7 +384,7 @@ class pickme_chronopost extends CarrierModule
 
     $list .= '</optgroup></select>';
 
-    $html .= $list;
+    if ($is_selected) $html .= $list;
 
     return $html;
   }

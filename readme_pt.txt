@@ -1,26 +1,25 @@
-===============================================
-PickMe Chronopost v1.2 installation steps
-===============================================
+====================================================
+Chronopost Pickup (pickme) v1.3 etapas de instalação 
+====================================================
 
-Installation procedure
------------------------------------------------
-1) Copy the extracted "pickme_chronopost" folder 
-to your modules folder inside Prestashop main folder
+procedimento de instalação
+----------------------------------------------------
+1) Copie a pasta "pickme_chronopost" para
+a sua pasta de módulos dentro da pasta principal Prestashop
 
-2) Make sure the webserver has read/write
-privileges to this folder and has outbound TCP
-port 7790 unblocked by firewall.
+2) Verifique se o servidor tem privilégios de leitura / gravação
+para essa pasta e tem a porta de saída TCP 7790 desbloqueada pela firewall.
 
-3) Log in to the administration console to
-install this module:
+3) Faça o login na consola de administração para
+instalar este módulo:
 
--> Modules -> PickMe Chronopost -> Install
+-> Módulos -> Chronopost Pickup -> Instalar
 
-4) Configure this module:
+4) Configure este módulo:
 
--> Modules -> PickMe Chronopost -> Configure
+-> Módulos -> Chronopost Pickup -> Configurar
 
 
-Once installed, every order with PickMe Chronopost
-selected as shipping method, will have the information
-of the store the user picked
+Uma vez instalado, cada encomenda com Chronopost Pickup
+selecionado como método de envio, terá a informação
+da loja que o utilizador escolheu.

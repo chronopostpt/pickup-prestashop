@@ -22,15 +22,15 @@ class pickme_chronopost extends CarrierModule
 	{
 		$this->name = 'pickme_chronopost';
 		$this->tab = 'shipping_logistics';
-		$this->version = '1.2';
-		$this->author = 'motivus.pt';
+		$this->version = '1.3';
+		$this->author = 'amplitudenet.pt';
 		$this->module_key = '11bad94727c2f1530e15c3c93ed2c5ce';
-		//$this->limited_countries = array('fr', 'us');
+		$this->limited_countries = array('pt');
 
 		parent::__construct ();
 
-		$this->displayName = $this->l('PickMe Chronopost');
-		$this->description = $this->l('Pick the nearest PickMe Chronopost');
+		$this->displayName = $this->l('Chronopost Pickup');
+		$this->description = $this->l('Pick the nearest Chronopost Pickup point');
 
 		if (self::isInstalled($this->name))
 		{
@@ -46,7 +46,7 @@ class pickme_chronopost extends CarrierModule
 			// Testing if Carrier Id exists
 			$warning = array();
 			if (!in_array((int)(Configuration::get('PICKME_CARRIER_ID')), $id_carrier_list))
-				$warning[] .= $this->l('"PickMe Chronopost"').' ';
+				$warning[] .= $this->l('"Chronopost Pickup"').' ';
 
 			if (!Configuration::get('PICKME_OVERCOST'))
 				$warning[] .= $this->l('"Overcost"').' ';
@@ -120,13 +120,13 @@ class pickme_chronopost extends CarrierModule
 		$this->updateDatabase();
 
 		$carrierConfig = array(
-			0 => array('name' => 'PickMe Chronopost',
+			0 => array('name' => 'Chronopost Pickup',
 				'id_tax_rules_group' => 0,
 				'active' => true,
 				'deleted' => 0,
 				'shipping_handling' => false,
 				'range_behavior' => 0,
-				'delay' => array(Language::getIsoById(Configuration::get('PS_LANG_DEFAULT')) => 'Choose one of our PickMe Chronopost stores.'),
+				'delay' => array(Language::getIsoById(Configuration::get('PS_LANG_DEFAULT')) => 'Choose one of our Chronopost Pickup points.'),
 				'id_zone' => 1,
 				'is_module' => true,
 				'shipping_external' => true,
@@ -301,7 +301,7 @@ class pickme_chronopost extends CarrierModule
 
 
 	    $html = '<br/><fieldset>';
-	    $html .= '<legend><img src="../img/admin/delivery.gif"> PickMe Chronopost delivery locations:</legend>';
+	    $html .= '<legend><img src="../img/admin/delivery.gif"> Chronopost Pickup delivery locations:</legend>';
 	    $html .= '<ul>';
 	    $html .= '<li>Name: '.$result['pickme_shop_name'].'</li>';
 	    $html .= '<li>Address: '.$result['pickme_shop_address'].'</li>';
@@ -317,21 +317,29 @@ class pickme_chronopost extends CarrierModule
   public function hookDisplayCarrierList($params)
   {
 	  
-	if (!($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')))){
-		return false;
-	}	  
+
+	$is_selected = ((int)(Configuration::get('PICKME_CARRIER_ID')) == $params['cart']->id_carrier);
 	
-	$is_selected = $this->id_carrier == $params['cart']->id_carrier;
+	if (!$is_selected) {
+		$script = "<script type=\"text/javascript\">";
+		$script .="$('#pickme_stores').hide();";
+		$script .= "</script>";
+		
+		return($script);
+	}
 	
-	//	echo "<pre>";echo($params['cart']->id_carrier);echo "</pre>";
-	//	echo "<pre>";echo($this->id_carrier);echo "</pre>";
-  	//  echo "<pre>";echo($this->id_carrier) ."   ".(int)(Configuration::get('PICKME_CARRIER_ID'));echo "</pre>";
-  	//  die();
+
   	
-  	$script = "<script type=\"text/javascript\"> ";
+  	$script = "<script type=\"text/javascript\">";
   	$script .= "$(document).ready(function() {";
   	$script .= "$('.pickme_stores_select:not(:first)').remove();";
-  	$script .= "$($('input[value=\"".(Configuration::get('PICKME_CARRIER_ID'))."\"]').closest('label').find('table td')[1]).append($('#pickme_stores'));";
+  	
+  	//$script .= "$($('input[value=\"".(Configuration::get('PICKME_CARRIER_ID')).",\"]').closest('label').find('table td')[1]).append($('#pickme_stores'));";
+  	$script .= "$($('input[value=\"".(Configuration::get('PICKME_CARRIER_ID')).",\"].delivery_option_radio').closest('td.delivery_option_radio').parent().find('td')[2]).append($('#pickme_stores'));";
+  	$script .="$('#pickme_stores').show();";
+  	
+  	//$script .= "$('input[value=\"".(Configuration::get('PICKME_CARRIER_ID')).",\"].delivery_option_radio').hide();";
+  	
   	$script .= "document.cookie = 'pickme_store='+$('#pickme_stores').val();";
   	$script .= "$('#pickme_stores').change(function(){document.cookie = 'pickme_store='+$('#pickme_stores').val();})";
     //$script .= "$('#pickme_stores').ddslick();";
@@ -340,7 +348,7 @@ class pickme_chronopost extends CarrierModule
 
   	$html = $script;
 
-  	$list = '<select id="pickme_stores" class="pickme_stores_select" style="width:100%"><optgroup>';
+  	$list = '<select id="pickme_stores" class="pickme_stores_select" style="display:none;width:100%"><optgroup>';
 
   	$sql = 'SELECT * FROM '._DB_PREFIX_.'pickme_shops order by location asc';// WHERE postal_code like "%'.substr(($params['address']->postcode), 0, 4).'%"';
 		if ($results = Db::getInstance()->ExecuteS($sql)) {
@@ -403,7 +411,7 @@ class pickme_chronopost extends CarrierModule
 
 	public function getContent()
 	{
-		$this->_html .= '<h2>' . $this->l('PickMe Chronopost').'</h2>';
+		$this->_html .= '<h2>' . $this->l('Chronopost Pickup').'</h2>';
 		if (!empty($_POST) AND Tools::isSubmit('updateDatabase')) {
 			if (Tools::getValue('pickme_refresh') == 'true') {
 				$this->updateDatabase();
@@ -427,17 +435,17 @@ class pickme_chronopost extends CarrierModule
 	private function _displayForm()
 	{
 		$this->_html .= '<fieldset>
-		<legend><img src="'.$this->_path.'logo.gif" alt="" /> '.$this->l('PickMe Chronopost Module Status').'</legend>';
+		<legend><img src="'.$this->_path.'logo.gif" alt="" /> '.$this->l('Chronopost Pickup Module Status').'</legend>';
 
 		$alert = array();
 		// if (!Configuration::get('PICKME_OVERCOST') || Configuration::get('PICKME_OVERCOST') == '')
 		// 	$alert['overcost'] = 1;
 
 		if (!count($alert))
-			$this->_html .= '<img src="'._PS_IMG_.'admin/module_install.png" /><strong>'.$this->l('PickMe Chronopost is configured and online!').'</strong>';
+			$this->_html .= '<img src="'._PS_IMG_.'admin/module_install.png" /><strong>'.$this->l('Chronopost Pickup is configured and online!').'</strong>';
 		else
 		{
-			$this->_html .= '<img src="'._PS_IMG_.'admin/warn2.png" /><strong>'.$this->l('PickMe Chronopost is not configured yet, please:').'</strong>';
+			$this->_html .= '<img src="'._PS_IMG_.'admin/warn2.png" /><strong>'.$this->l('Chronopost Pickup is not configured yet, please:').'</strong>';
 			$this->_html .= '<br />'.(isset($alert['overcost']) ? '<img src="'._PS_IMG_.'admin/warn2.png" />' : '<img src="'._PS_IMG_.'admin/module_install.png" />').' 1) '.$this->l('Configure the PickMe overcost');
 		}
 
@@ -450,9 +458,9 @@ class pickme_chronopost extends CarrierModule
 
 						<fieldset style="border: 0px;">
 							<h4>'.$this->l('General configuration').' :</h4>
-							<label>'.$this->l('PickMe webservice').' : </label>
+							<label>'.$this->l('Chronopost Pickup webservice').' : </label>
 							<div class="margin-form"><input type="text" size="100" name="pickme_webservice" value="'.Tools::getValue('pickme_webservice', Configuration::get('PICKME_WEBSERVICE')).'" /></div>
-							<label>'.$this->l('PickMe overcost').' : </label>
+							<label>'.$this->l('Chronopost Pickup overcost').' : </label>
 							<div class="margin-form"><input type="text" size="20" name="pickme_overcost" value="'.Tools::getValue('pickme_overcost', Configuration::get('PICKME_OVERCOST')).'" /></div>
 							<div class="margin-form"><input class="button" name="submitSave" type="submit" value="Save"></div>
 						</fieldset>
@@ -462,7 +470,7 @@ class pickme_chronopost extends CarrierModule
 				<div class="tabItem">
 					<form action="index.php?tab='.Tools::getValue('tab').'&configure='.Tools::getValue('configure').'&token='.Tools::getValue('token').'&tab_module='.Tools::getValue('tab_module').'&module_name='.Tools::getValue('module_name').'&pickme_refresh=true" method="post" class="form" id="configForm">
 						<fieldset style="border: 0px;">
-							<h4>'.$this->l('Use this button to update the PickMe Available Stores').' :</h4>
+							<h4>'.$this->l('Use this button to update the Chronopost Pickup available points.').' :</h4>
 							<div class="margin-form"><input class="button" name="updateDatabase" type="submit" value="Update Database"></div>
 						</fieldset>
 					</form>
@@ -474,7 +482,7 @@ class pickme_chronopost extends CarrierModule
 	{
 		// Check configuration values
 		if (Tools::getValue('pickme_overcost') == '')
-			$this->_postErrors[]  = $this->l('You have to configure PickMe Chronopost');
+			$this->_postErrors[]  = $this->l('You have to configure Chronopost Pickup');
 	}
 
 	private function _postProcess()
@@ -513,8 +521,17 @@ class pickme_chronopost extends CarrierModule
 	**
 	*/
 
-	public function getOrderShippingCost($params, $shipping_cost)
+	public function getOrderShippingCost($cart, $shipping_cost)
 	{
+		
+		$a = new Address($cart->id_address_delivery);
+		$c = new Country($a->id_country);
+		
+		if ($c->iso_code != 'PT'){
+			return false;
+		}		
+		
+		//~ return false;
 		// This example returns shipping cost with overcost set in the back-office, but you can call a webservice or calculate what you want before returning the final value to the Cart
 		if ($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')) && Configuration::get('PICKME_OVERCOST') >= 0)
 			return $shipping_cost + (float)(Configuration::get('PICKME_OVERCOST'));
@@ -525,12 +542,15 @@ class pickme_chronopost extends CarrierModule
 
 	public function getOrderShippingCostExternal($params)
 	{
-		// This example returns the overcost directly, but you can call a webservice or calculate what you want before returning the final value to the Cart
-		if ($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')) && Configuration::get('PICKME_OVERCOST') >= 0)
-			return (float)(Configuration::get('PICKME_OVERCOST'));
-
-		// If the carrier is not known, you can return false, the carrier won't appear in the order process
-		return false;
+		
+		return $this->getOrderShippingCost($params, 0);
+		
+		//~ // This example returns the overcost directly, but you can call a webservice or calculate what you want before returning the final value to the Cart
+		//~ if ($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')) && Configuration::get('PICKME_OVERCOST') >= 0)
+			//~ return (float)(Configuration::get('PICKME_OVERCOST'));
+//~ 
+		//~ // If the carrier is not known, you can return false, the carrier won't appear in the order process
+		//~ return false;
 	}
 
 }

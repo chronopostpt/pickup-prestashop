@@ -88,7 +88,7 @@ class pickme_chronopost extends CarrierModule
 		    } else {
 		      $query = '
 		        UPDATE `'._DB_PREFIX_.'pickme_shops`
-		        SET name="'.$message->Name.'", address="'.$message->Address.'", postal_code="'.$message->PostalCode.', location="'.$message->PostalCodeLocation.'"
+		        SET name="'.$message->Name.'", address="'.$message->Address.'", postal_code="'.$message->PostalCode.'", location="'.$message->PostalCodeLocation.'"
 		        WHERE pickme_id="'.$message->Number.'"';
 		      Db::getInstance()->execute($query);
 		    }

@@ -74,6 +74,9 @@ class pickme_chronopost extends CarrierModule
 		);
 
 		  $result = $client->getPointList_V3();
+		  
+		  $pickme_ids = array();
+		  		  
 		  foreach ($result->return->lB2CPointsArr as $message) {
 		    $id_pickme_shop_order = Db::getInstance()->getValue('
 		      SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
@@ -92,7 +95,14 @@ class pickme_chronopost extends CarrierModule
 		        WHERE pickme_id="'.$message->Number.'"';
 		      Db::getInstance()->execute($query);
 		    }
+		    $pickme_ids[$message->Number]=$message->Number;
 		  }
+		  
+		  if (count($pickme_ids)>0) {
+			  
+		      $query = "DELETE FROM "._DB_PREFIX_.'pickme_shops'." WHERE pickme_id NOT IN('".implode("','",$pickme_ids)."')";
+		      Db::getInstance()->execute($query);			  
+		  }		  
 	}
 
 

@@ -22,7 +22,7 @@ class pickme_chronopost extends CarrierModule
 	{
 		$this->name = 'pickme_chronopost';
 		$this->tab = 'shipping_logistics';
-		$this->version = '1.3';
+		$this->version = '1.3.2';
 		$this->author = 'amplitudenet.pt';
 		$this->module_key = '11bad94727c2f1530e15c3c93ed2c5ce';
 		$this->limited_countries = array('pt');
@@ -74,9 +74,9 @@ class pickme_chronopost extends CarrierModule
 		);
 
 		  $result = $client->getPointList_V3();
-		  
+
 		  $pickme_ids = array();
-		  		  
+
 		  foreach ($result->return->lB2CPointsArr as $message) {
 		    $id_pickme_shop_order = Db::getInstance()->getValue('
 		      SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shops`
@@ -97,12 +97,12 @@ class pickme_chronopost extends CarrierModule
 		    }
 		    $pickme_ids[$message->Number]=$message->Number;
 		  }
-		  
+
 		  if (count($pickme_ids)>0) {
-			  
+
 		      $query = "DELETE FROM "._DB_PREFIX_.'pickme_shops'." WHERE pickme_id NOT IN('".implode("','",$pickme_ids)."')";
-		      Db::getInstance()->execute($query);			  
-		  }		  
+		      Db::getInstance()->execute($query);
+		  }
 	}
 
 
@@ -276,34 +276,28 @@ class pickme_chronopost extends CarrierModule
 	{
 		// cart, customer, order, altern
 		if (($params['cart']->id_carrier) == ((int)(Configuration::get('PICKME_CARRIER_ID')))) {
+			
+			$pickup_store = $this->context->cookie->pickup_store;
+			
 			// error_log("pickme order");
 			$result = Db::getInstance()->getRow('
 							SELECT *
 							FROM `' . _DB_PREFIX_ . 'pickme_shops`
-							WHERE id_pickme_shop='.$_COOKIE["pickme_store"]);
+							WHERE pickme_id=' . $pickup_store );
 
 			$query = '
 				INSERT INTO `'._DB_PREFIX_.'pickme_shop_orders`
 							 (id_order, pickme_shop_name, pickme_shop_address, pickme_shop_location, pickme_shop_postal_code)
 				VALUES ('.(int)$params['order']->id.', "'.$result['name'].'", "'.$result['address'].'", "'.$result['location'].'", "'.$result['postal_code'].'")';
 			Db::getInstance()->execute($query);
-			 //~ print_r($_COOKIE["pickme_store"]);
-			 //~ print_r($params);
-			 //~ die();
+
 		}
 	}
 
 	public function hookDisplayAdminOrder($params)
   {
   	if (($params['cart']->id_carrier) == ((int)(Configuration::get('PICKME_CARRIER_ID')))) {
-	  	// $pickme_shop_id = Db::getInstance()->getValue('
-				// 	SELECT id_pickme_shop FROM `'._DB_PREFIX_.'pickme_shop_orders`
-				// 	WHERE id_order='.$params['id_order']);
 
-	  	// $result = Db::getInstance()->getRow('
-				// SELECT *
-				// FROM `' . _DB_PREFIX_ . 'pickme_shops`
-				// WHERE id_pickme_shop='.$pickme_shop_id);
 	  	$result = Db::getInstance()->getRow('
 	  					SELECT *
 	  					FROM `' . _DB_PREFIX_ . 'pickme_shop_orders`
@@ -326,35 +320,64 @@ class pickme_chronopost extends CarrierModule
 
   public function hookDisplayCarrierList($params)
   {
-	  
+
 
 	$is_selected = ((int)(Configuration::get('PICKME_CARRIER_ID')) == $params['cart']->id_carrier);
-	
+
 	if (!$is_selected) {
-		$script = "<script type=\"text/javascript\">";
-		$script .="$('#pickme_stores').hide();";
-		$script .= "</script>";
 		
+
+		$script = <<<EOT
+						
+		<script type="text/javascript">
+			$('#pickme_stores').hide();
+		</script>
+EOT;
+
 		return($script);
 	}
-	
 
-  	
-  	$script = "<script type=\"text/javascript\">";
-  	$script .= "$(document).ready(function() {";
-  	$script .= "$('.pickme_stores_select:not(:first)').remove();";
-  	
-  	//$script .= "$($('input[value=\"".(Configuration::get('PICKME_CARRIER_ID')).",\"]').closest('label').find('table td')[1]).append($('#pickme_stores'));";
-  	$script .= "$($('input[value=\"".(Configuration::get('PICKME_CARRIER_ID')).",\"].delivery_option_radio').closest('td.delivery_option_radio').parent().find('td')[2]).append($('#pickme_stores'));";
-  	$script .="$('#pickme_stores').show();";
-  	
-  	//$script .= "$('input[value=\"".(Configuration::get('PICKME_CARRIER_ID')).",\"].delivery_option_radio').hide();";
-  	
-  	$script .= "document.cookie = 'pickme_store='+$('#pickme_stores').val();";
-  	$script .= "$('#pickme_stores').change(function(){document.cookie = 'pickme_store='+$('#pickme_stores').val();})";
-    //$script .= "$('#pickme_stores').ddslick();";
-  	$script .= "});";
-  	$script .= "</script>";
+	$selected_pickup_store = $this->context->cookie->pickup_store;
+
+	$PICKME_CARRIER_ID = Configuration::get('PICKME_CARRIER_ID');
+	
+	$ajax_handler =  __PS_BASE_URI__ . "modules/pickme_chronopost/async/setPickUpPoint.php";
+	
+	$script = <<<EOT
+	
+	<script type="text/javascript">	
+	
+		function setPickUpStore(){
+		
+			var pickup_store = $('#pickme_stores').val();
+			
+			console.log(pickup_store);
+			
+			$.getJSON( "$ajax_handler", {pickup_store:pickup_store}, function( data ) {
+			  console.log(data);
+			});
+		
+		}	
+	
+		$(document).ready(function() {
+			
+			$('.pickme_stores_select:not(:first)').remove();
+			
+			$($('input[value="$PICKME_CARRIER_ID,"].delivery_option_radio').closest('td.delivery_option_radio').parent().find('td')[2]).append($('#pickme_stores'));
+			$('#pickme_stores').show();
+			
+			setPickUpStore();
+			
+			$('#pickme_stores').change(function(){
+				setPickUpStore();
+			});
+			
+		});
+		
+	</script>
+
+EOT;
+
 
   	$html = $script;
 
@@ -376,29 +399,11 @@ class pickme_chronopost extends CarrierModule
                     $curLocation = $row['location'];
                     $list .= '</optgroup> <optgroup label="'.$curLocation.'">';
                 }
-
-				$list .= '<option value="'.$row['id_pickme_shop'].'">'.$row['name'].' - '.$address1.'</option>';
+				
+				$selected = ($selected_pickup_store == $row['pickme_id']) ? " selected ": "";
+				$list .= "<option $selected value='".$row['pickme_id']."'>".$row['name']." - ".$address1."</option>";
 			}
 		}
-		/*
-		$list .= '<option disabled="disabled">---</option>';
-
-		$sql = 'SELECT * FROM '._DB_PREFIX_.'pickme_shops WHERE postal_code not like "%'.substr(($params['address']->postcode), 0, 4).'%"';
-		if ($results = Db::getInstance()->ExecuteS($sql))
-			foreach ($results as $row)
-				$list .= '<option value="'.$row['id_pickme_shop'].'">'.$row['name'].' - '.$row['location'].'</option>';
-		*/
-
-    // $client = new SoapClient("https://83.240.239.170:7554/ChronoWSB2CPointsv3/GetB2CPoints_v3Service?wsdl");
-    // //$result = $client->getPointList_V3(array('pPointPostalCode'=>4150));
-    // $result = $client->getPointList_V3(array('pPointPostalCode'=>substr(($params['address']->postcode), 0, 4)));
-    // // //$result = $client->getPointList_V3();
-    // // $html = '<div class="block&quot"<h4>'. Configuration::get($this->name.'_message') . '</h4></div>';
-    // $list = '<select id="pickme_stores" class="pickme_stores_select">';
-
-    // foreach ($result->return->lB2CPointsArr as $message) {
-    //     $list .= '<option value="'.$message->Number.'">'.$message->Name.'</option>';
-    // }
 
     $list .= '</optgroup></select>';
 
@@ -448,6 +453,7 @@ class pickme_chronopost extends CarrierModule
 		<legend><img src="'.$this->_path.'logo.gif" alt="" /> '.$this->l('Chronopost Pickup Module Status').'</legend>';
 
 		$alert = array();
+		
 		// if (!Configuration::get('PICKME_OVERCOST') || Configuration::get('PICKME_OVERCOST') == '')
 		// 	$alert['overcost'] = 1;
 
@@ -533,14 +539,14 @@ class pickme_chronopost extends CarrierModule
 
 	public function getOrderShippingCost($cart, $shipping_cost)
 	{
-		
+
 		$a = new Address($cart->id_address_delivery);
 		$c = new Country($a->id_country);
-		
+
 		if ($c->iso_code != 'PT'){
 			return false;
-		}		
-		
+		}
+
 		//~ return false;
 		// This example returns shipping cost with overcost set in the back-office, but you can call a webservice or calculate what you want before returning the final value to the Cart
 		if ($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')) && Configuration::get('PICKME_OVERCOST') >= 0)
@@ -552,15 +558,16 @@ class pickme_chronopost extends CarrierModule
 
 	public function getOrderShippingCostExternal($params)
 	{
-		
+
 		return $this->getOrderShippingCost($params, 0);
-		
+
 		//~ // This example returns the overcost directly, but you can call a webservice or calculate what you want before returning the final value to the Cart
 		//~ if ($this->id_carrier == (int)(Configuration::get('PICKME_CARRIER_ID')) && Configuration::get('PICKME_OVERCOST') >= 0)
 			//~ return (float)(Configuration::get('PICKME_OVERCOST'));
-//~ 
+//~
 		//~ // If the carrier is not known, you can return false, the carrier won't appear in the order process
 		//~ return false;
 	}
+
 
 }

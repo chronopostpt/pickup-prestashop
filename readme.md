@@ -1,5 +1,5 @@
 ===================================================
-Chronopost Pickup (pickme)  v1.3 installation steps
+Chronopost Pickup (pickme)  v1.3.2 installation steps
 ===================================================
 
 Installation procedure
@@ -24,3 +24,11 @@ install this module:
 Once installed, every order with Chronopost Pickup
 selected as shipping method, will have the information
 of the store the user picked.
+
+
+
+**URL for auto-update of Pickup Points database ( to be called by cron ):**
+
+PRESTASHOP_BASE_URL + /modules/pickme_chronopost/async/updatePickUpDatabase.php
+
+example: http://prestashop.example.com/modules/pickme_chronopost/async/updatePickUpDatabase.php
